@@ -1,0 +1,27 @@
+{
+  "name": "thread_pool",
+  "version": "1.0.0",
+  "description": "auto-configured pool for worker threads, provides both thread and pool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Truth1984/thread_pool.git"
+  },
+  "keywords": [
+    "thread_pool",
+    "thread-pool",
+    "thread",
+    "pool",
+    "worker_threads",
+    "workers"
+  ],
+  "author": "awada",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Truth1984/thread_pool/issues"
+  },
+  "homepage": "https://github.com/Truth1984/thread_pool#readme"
+}
