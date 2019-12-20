@@ -5,7 +5,7 @@ Auto-configured pool for worker threads, provides both thread and pool
 #### Use `--experimental-worker` flag while running the code.
 
 ```js
-const Pool = require("thread_pool");
+const Pool = require("thread_pools");
 
 let ezpool = new Pool();
 let pool = new Pool({
