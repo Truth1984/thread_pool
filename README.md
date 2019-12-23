@@ -25,6 +25,14 @@ for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().leng
 
 3. can use `console.log` inside thread function
 
+## What's new
+
+```
+{
+    1.2.0: Promise.all(threadPool(......)) is now viable
+}
+```
+
 ## API
 
 ### Pool(options)
@@ -41,8 +49,12 @@ for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().leng
 
 ### async threadSingle(func, ...param)
 
-single threads runner, very expensive, auto closed.
+`func` : toString()able function, param : parameters of `func`
+
+single thread runner, very expensive, auto closed.
 
 ### async threadPool(func, ...param)
+
+`func` : toString()able function, param : parameters of `func`
 
 use already initialized threads, expensive at the beginning but much faster than `threadSingle` for larger task
