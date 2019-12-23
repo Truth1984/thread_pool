@@ -33,6 +33,12 @@ for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().leng
 }
 ```
 
+## Notice
+
+- better initialize Pool only once and Store it in a global variable
+
+- some libraries are unable to support `worker_threads`, like `bcrypt`
+
 ## API
 
 ### Pool(options)
@@ -44,8 +50,6 @@ for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().leng
     waitMs: Main Thread Promise Checker, check if the pool is open
 }
 ```
-
-##### notice: better initialize Pool only once and Store it in a global variable
 
 ### async threadSingle(func, ...param)
 
