@@ -29,7 +29,7 @@ for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().leng
 
 ```
 {
-    1.2.0: Promise.all(threadPool(......)) is now viable
+    1.2.1: Promise.all(threadPool(......)) is now viable
 }
 ```
 

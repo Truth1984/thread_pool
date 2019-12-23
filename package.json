@@ -1,6 +1,6 @@
 {
   "name": "thread_pools",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "auto-configured pool for worker threads, provides both thread and pool",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "worker_threads",
     "workers"
   ],
-  "author": "awada",
+  "author": "Awada",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Truth1984/thread_pool/issues"
