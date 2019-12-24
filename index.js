@@ -4,17 +4,20 @@ const os = require("os");
 module.exports = class Pool {
   /**
    *
-   * @param {{threads:Number, importGlobal:string, waitMs:Number}} config threads : CPUNo. < 3 ? 2 : CPUNo. * 2 - 2
+   * @param {{threads:Number, importGlobal:string, waitMs:Number, shareEnv: Boolean}} config threads : CPUNo. < 3 ? 2 : CPUNo. * 2 - 2
    *
    * importGlobal : <require / import> statement, for thread pool environment, reduce overhead
    *
    * waitMs : the frequency of threadPool checking if thread is avaliable, default: 100
+   *
+   * shareEnv : use process.env to store the data, thread unsafe
    */
   constructor(config = {}) {
     let defaultConfig = {
       threads: os.cpus().length < 3 ? 2 : os.cpus().length * 2 - 2,
       importGlobal: ``,
-      waitMs: 100
+      waitMs: 100,
+      shareEnv: true
     };
     config = Object.assign(defaultConfig, config);
 
@@ -23,6 +26,7 @@ module.exports = class Pool {
     this.entry.threadNo = config.threads;
     this.entry.importGlobal = config.importGlobal;
     this.entry.waitMs = config.waitMs;
+    this.entry.shareEnv = config.shareEnv;
 
     this.entry._threadPools = {};
     this.entry._threadAvailableID = Array(this.entry.threadNo)
@@ -30,11 +34,19 @@ module.exports = class Pool {
       .map((i, index) => index);
     this.entry._posterString = `let post = (data, type = "msg") => parentPort.postMessage({ data, type }); 
     console.log = (...data) => post(data);`;
+    this.entry._env = `process.env = new Proxy(process.env, {
+      set: (source, key, value) => {
+        post({ [key]: value }, "env");
+        Reflect.set(source, key, value);
+      },
+      get: (source, key) => Reflect.get(source, key)
+    });`;
 
     this.entry.setListener = (worker, resolve, reject) => {
       worker.removeAllListeners();
       worker.on("message", message => {
         if (message.type == "msg") console.log(...message.data);
+        else if (message.type == "env") process.env = Object.assign(process.env, message.data);
         else resolve(message.data);
       });
       worker.once("error", error => reject(error));
@@ -52,6 +64,7 @@ module.exports = class Pool {
           ${this.entry.importGlobal} 
 
           ${this.entry._posterString}
+          ${this.entry.shareEnv ? this.entry._env : ""}
       
           let result = (${func.toString()})(...workerData.parameter); 
           post(result,"result");
@@ -71,6 +84,7 @@ module.exports = class Pool {
             ${this.entry.importGlobal} 
         
             ${this.entry._posterString}
+            ${this.entry.shareEnv ? this.entry._env : ""}
         
             parentPort.on('message', item => {
               let func = eval(item.func);
