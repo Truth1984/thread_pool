@@ -4,7 +4,7 @@ const os = require("os");
 module.exports = class Pool {
   /**
    *
-   * @param {{threads:Number, importGlobal:string, waitMs:Number, shareEnv: Boolean}} config threads : CPUNo. < 3 ? 2 : CPUNo. * 2 - 2
+   * @param {{threads:Number, importGlobal:string, waitMs:Number}} config threads : CPUNo. < 3 ? 2 : CPUNo. * 2 - 2
    *
    * importGlobal : <require / import> statement, for thread pool environment, reduce overhead
    *
@@ -23,7 +23,6 @@ module.exports = class Pool {
     this.entry.threadNo = config.threads;
     this.entry.importGlobal = config.importGlobal;
     this.entry.waitMs = config.waitMs;
-    this.entry.shareEnv = config.shareEnv;
 
     this.entry._threadPools = {};
     this.entry._threadAvailableID = Array(this.entry.threadNo)
@@ -51,9 +50,7 @@ module.exports = class Pool {
       let worker = new Worker(
         ` const {  parentPort, workerData } = require("worker_threads");
           ${this.entry.importGlobal} 
-
           ${this.entry._posterString}
-          ${this.entry.shareEnv ? this.entry._env : ""}
       
           let result = (${func.toString()})(...workerData.parameter); 
           post(result,"result");
@@ -71,9 +68,7 @@ module.exports = class Pool {
         this.entry._threadPools[id] = new Worker(
           ` const { parentPort, workerData } = require("worker_threads");
             ${this.entry.importGlobal} 
-        
             ${this.entry._posterString}
-            ${this.entry.shareEnv ? this.entry._env : ""}
         
             parentPort.on('message', item => {
               let func = eval(item.func);

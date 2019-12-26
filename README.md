@@ -31,7 +31,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 ```
 {
-    1.3.2: env is auto shared
+    1.3.3: env is auto shared
     1.3.0: Add shareEnv option
     1.2.1: Promise.all(threadPool(......)) is now viable
 }
