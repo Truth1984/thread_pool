@@ -11,8 +11,7 @@ let ezpool = new Pool();
 let pool = new Pool({
   threads: 2,
   importGlobal: `const os = require('os');`,
-  waitMs: 1000,
-  shareEnv: true
+  waitMs: 1000
 });
 
 for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().length + index), i);
@@ -32,6 +31,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 ```
 {
+    1.3.2: env is auto shared
     1.3.0: Add shareEnv option
     1.2.1: Promise.all(threadPool(......)) is now viable
 }
@@ -43,9 +43,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 - some libraries are unable to support `worker_threads`, like `bcrypt`
 
-- `{SHARE_ENV}` in `worker_threads` may throw `DataCloneError: Symbol(nodejs.worker_threads.SHELL_ENV) could not be cloned` Error, thus using self-implemented methods.
-
-- `process.env` will always return a <b>STRING</b> type, and `shareEnv` is a thread unsafe method, use with caution!
+- process.env is thread unsafe, use with caution.
 
 ## API
 
@@ -56,7 +54,6 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
     threads = if No. of cpu < 3, then 2, else (cpu No. * 2 - 2)
     importGlobal : import / require statement for every threads
     waitMs: Main Thread Promise Checker, check if the pool is open
-    shareEnv: share process.env between all the threads, thread unsafe
 }
 ```
 
