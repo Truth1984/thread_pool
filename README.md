@@ -1,4 +1,4 @@
-Auto-configured pool for worker threads, provides both thread and pool function
+Auto-configured thread pool for worker_threads, provides both thread and pool function
 
 ## Usage
 
