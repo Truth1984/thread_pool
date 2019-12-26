@@ -1,4 +1,4 @@
-Auto-configured pool for worker threads, provides both thread and pool
+Auto-configured pool for worker threads, provides both thread and pool function
 
 ## Usage
 
@@ -23,7 +23,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 1. Auto configured
 
-2. Lazy initialze threads in thread pool
+2. Lazy initialize threads in thread pool
 
 3. can use `console.log` inside thread function
 
@@ -31,6 +31,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 ```
 {
+    1.4.0: support async function
     1.3.3: env is auto shared
     1.3.0: Add shareEnv option
     1.2.1: Promise.all(threadPool(......)) is now viable

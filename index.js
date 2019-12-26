@@ -4,7 +4,7 @@ const os = require("os");
 module.exports = class Pool {
   /**
    *
-   * @param {{threads:Number, importGlobal:string, waitMs:Number}} config threads : CPUNo. < 3 ? 2 : CPUNo. * 2 - 2
+   * @param {{threads:Number, importGlobal:string, waitMs:Number}} config threads : CPUNo. < 3 ? 2 : (CPUNo. * 2 - 2)
    *
    * importGlobal : <require / import> statement, for thread pool environment, reduce overhead
    *
@@ -35,6 +35,7 @@ module.exports = class Pool {
       worker.removeAllListeners();
       worker.on("message", message => {
         if (message.type == "msg") console.log(...message.data);
+        else if (message.type == "reject") reject(message.data);
         else resolve(message.data);
       });
       worker.once("error", error => reject(error));
@@ -53,8 +54,14 @@ module.exports = class Pool {
           ${this.entry._posterString}
       
           let result = (${func.toString()})(...workerData.parameter); 
-          post(result,"result");
-          process.exit();`,
+
+          if (result instanceof Promise){
+            result.then(data => post(data, "result")).catch(error => post(error, "reject")).then(()=>process.exit())
+          } else {
+            post(result, "result");
+            process.exit();
+          }
+          `,
         { eval: true, workerData: { parameter: param }, env: SHARE_ENV }
       );
       return new Promise((resolve, reject) => this.entry.setListener(worker, resolve, reject));
@@ -73,7 +80,9 @@ module.exports = class Pool {
             parentPort.on('message', item => {
               let func = eval(item.func);
               let result = func(...item.param); 
-              post(result, "result");
+              result instanceof Promise
+                ? result.then(data => post(data, "result")).catch(error => post(error, "reject"))
+                : post(result, "result");
             });
             `,
           { eval: true, env: SHARE_ENV }
