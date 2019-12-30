@@ -14,9 +14,17 @@ let pool = new Pool({
   waitMs: 1000
 });
 
-for (let i = 0; i < 10; i++) pool.threadPool(index => console.log(os.cpus().length + index), i);
+for (let i = 0; i < 10; i++) {
+  pool.threadPool(index => console.log(os.cpus().length + index), i);
+}
 
-pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.log(process.env.returnType));
+pool
+  .threadSingle(() => {
+    process.env.returnType = "String";
+  })
+  .then(() => console.log(process.env.returnType));
+
+pool.threadSingleStoppable(() => {}).cancel();
 ```
 
 ## features
@@ -67,7 +75,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 single thread runner, very expensive, auto closed.
 
-### threadthreadSingleStoppable(func, ...param)
+### async threadSingleStoppable(func, ...param)
 
 return `{cancel:Function, result:Promise}`
 
