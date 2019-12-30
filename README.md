@@ -31,6 +31,7 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 ```
 {
+    1.6.0: add stoppable thread single, pool, add test case
     1.4.0: support async function
     1.3.3: env is auto shared
     1.3.0: Add shareEnv option
@@ -46,6 +47,8 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 - process.env is thread unsafe, use with caution.
 
+- cancelling every thread after the execution of `threadPoolStoppable` is no different from `threadSingle`, and maybe slower
+
 ## API
 
 ### Pool(options)
@@ -60,12 +63,24 @@ pool.threadSingle(() => (process.env.returnType = "String")).then(() => console.
 
 ### async threadSingle(func, ...param)
 
-`func` : toString()able function, param : parameters of `func`
+`func` : toStringable / cloneable function, param : parameters of `func`
 
 single thread runner, very expensive, auto closed.
 
+### threadthreadSingleStoppable(func, ...param)
+
+return `{cancel:Function, result:Promise}`
+
 ### async threadPool(func, ...param)
 
-`func` : toString()able function, param : parameters of `func`
+`func` : toStringable / cloneable function, param : parameters of `func`
 
 use already initialized threads, expensive at the beginning but much faster than `threadSingle` for larger task
+
+### async threadPoolStoppable(func, ...param)
+
+return `Promise<{cancel:Function, result:Promise}>`
+
+`threadPoolStoppable().catch()` will not catch the error, use
+
+`threadPoolStoppable().then(data=>data.result.catch())` instead

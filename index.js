@@ -44,9 +44,10 @@ module.exports = class Pool {
   }
 
   /**
-   * @param func {Function}
+   *
+   * @return {{cancel:Function, result:Promise}}
    */
-  async threadSingle(func, ...param) {
+  threadSingleStoppable(func, ...param) {
     if (isMainThread) {
       let worker = new Worker(
         ` const {  parentPort, workerData } = require("worker_threads");
@@ -64,12 +65,25 @@ module.exports = class Pool {
           `,
         { eval: true, workerData: { parameter: param }, env: SHARE_ENV }
       );
-      return new Promise((resolve, reject) => this.entry.setListener(worker, resolve, reject));
+      return {
+        cancel: () => worker.terminate(),
+        result: new Promise((resolve, reject) => this.entry.setListener(worker, resolve, reject))
+      };
     }
-    return Promise.reject("This is not in the main thread");
+    return {
+      cancel: () => {},
+      result: Promise.reject("This is not in the main thread")
+    };
   }
 
-  async _threadAlive(id, func, ...param) {
+  /**
+   * @param func {Function}
+   */
+  async threadSingle(func, ...param) {
+    return this.threadSingleStoppable(func, ...param).result;
+  }
+
+  _threadAlive(id, func, ...param) {
     if (isMainThread) {
       if (!this.entry._threadPools[id]) {
         this.entry._threadPools[id] = new Worker(
@@ -90,24 +104,46 @@ module.exports = class Pool {
       }
       this.entry._threadPools[id].postMessage({ func: func.toString(), param });
 
-      return new Promise((resolve, reject) => this.entry.setListener(this.entry._threadPools[id], resolve, reject));
+      let publisher = data => {
+        this.entry._threadAvailableID.push(id);
+        return data;
+      };
+
+      let result = new Promise((resolve, reject) =>
+        this.entry.setListener(this.entry._threadPools[id], resolve, reject)
+      )
+        .then(data => publisher(data))
+        .catch(error => Promise.reject(publisher(error)));
+
+      return {
+        cancel: () => {
+          this.entry._threadPools[id].terminate();
+          delete this.entry._threadPools[id];
+        },
+        result
+      };
     }
-    return Promise.reject("This is not in the main thread");
+    return {
+      cancel: () => {},
+      result: Promise.reject("This is not in the main thread")
+    };
   }
 
   async threadPool(func, ...param) {
+    return this.threadPoolStoppable(func, ...param)
+      .then(data => data.result)
+      .catch(e => Promise.reject(e));
+  }
+
+  /**
+   * @return {Promise<{result:Promise, cancel:Function}>}
+   */
+  async threadPoolStoppable(func, ...param) {
     if (this.entry._threadAvailableID.length <= 0) {
       await new Promise(resolve => setTimeout(() => resolve(), this.entry.waitMs));
-      return this.threadPool(func, ...param);
+      return this.threadPoolStoppable(func, ...param);
     }
-
     let threadid = this.entry._threadAvailableID.pop();
-    let publisher = data => {
-      this.entry._threadAvailableID.push(threadid);
-      return data;
-    };
-    return this._threadAlive(threadid, func, ...param)
-      .then(data => publisher(data))
-      .catch(e => Promise.reject(publisher(e)));
+    return this._threadAlive(threadid, func, ...param);
   }
 };

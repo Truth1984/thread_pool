@@ -1,10 +1,10 @@
 {
   "name": "thread_pools",
-  "version": "1.4.1",
+  "version": "1.6.0",
   "description": "Auto-configured thread pool for worker_threads, provides both thread and pool function",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/test.js"
   },
   "repository": {
     "type": "git",
