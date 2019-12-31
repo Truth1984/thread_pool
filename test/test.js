@@ -67,3 +67,5 @@ pool
       if (res !== undefined) Promise.reject("pool stoppable not returning undefined as result");
     });
   });
+
+for (let i = 0; i < 10; i++) pool.threadPoolStoppable(() => 10).then(data => data.cancel());
