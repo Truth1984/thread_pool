@@ -28,15 +28,17 @@ module.exports = class Pool {
     this.entry._threadAvailableID = Array(this.entry.threadNo)
       .fill()
       .map((i, index) => index);
-    this.entry._posterString = `let post = (data, type = "msg") => parentPort.postMessage({ data, type }); 
-    console={log:(...data) => post(data),warn:(...data) => post(data,"msg-warn"),error:(...data) => post(data,"msg-error")};
-    `;
 
-    this.entry.workerMaker = () =>
+    this.entry.workerMaker = (exit = true) =>
       new Worker(
         ` const {  parentPort } = require("worker_threads");
         ${this.entry.importGlobal} 
-        ${this.entry._posterString}
+        let post = (data, type = "msg") => parentPort.postMessage({ data, type }); 
+        console = {
+          log: (...data) => post(data),
+          warn: (...data) => post(data, "msg-warn"),
+          error: (...data) => post(data, "msg-error")
+        };
 
         let evaluate = item => {
           let func = eval(item.func);
@@ -45,7 +47,7 @@ module.exports = class Pool {
             result.then(data => post(data, "result")).catch(error => post(error, "reject")).then(()=>process.exit())
           } else {
             post(result, "result");
-            process.exit();
+            ${exit ? `process.exit();` : ``}
           }
         };
 
@@ -113,7 +115,7 @@ module.exports = class Pool {
     }
     let threadid = this.entry._threadAvailableID.pop();
     if (isMainThread) {
-      if (!this.entry._threadPools[threadid]) this.entry._threadPools[threadid] = this.entry.workerMaker();
+      if (!this.entry._threadPools[threadid]) this.entry._threadPools[threadid] = this.entry.workerMaker(false);
       this.entry._threadPools[threadid].postMessage({ func: func.toString(), param, type: "eval" });
 
       let publisher = data => {

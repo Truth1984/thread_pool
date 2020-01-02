@@ -39,7 +39,7 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 ```
 {
-    1.6.6: add console.warn/error, unify methods
+    1.6.7: add console.warn/error, unify methods
     1.6.0: add stoppable thread single, pool, add test case
     1.4.0: support async function
     1.3.3: env is auto shared

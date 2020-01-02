@@ -15,7 +15,8 @@ pool.threadSingle(() => os.cpus().length);
 pool.threadSingle(async () => 1);
 pool.threadPoolStoppable(async () => 1).then(data => data.cancel());
 
-for (let i = 0; i < 10; i++) pool.threadSingle(data => data++, i);
+//stress
+for (let i = 0; i < 100; i++) pool.threadSingle(data => data++, i);
 
 // single stoppable test
 let singleStoppable = pool.threadSingleStoppable(() => {
