@@ -69,3 +69,7 @@ pool
   });
 
 for (let i = 0; i < 10; i++) pool.threadPoolStoppable(() => 10).then(data => data.cancel());
+
+pool.threadSingle(() => console.log("console-log"));
+pool.threadSingle(() => console.warn("console-warn"));
+pool.threadSingle(() => console.error("console-error"));
