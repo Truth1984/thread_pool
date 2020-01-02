@@ -51,7 +51,7 @@ module.exports = class Pool {
           }
         };
 
-        parentPort.once("message", message => {
+        parentPort.on("message", message => {
           if (message.type == "eval") return evaluate(message);
         });
         `,
