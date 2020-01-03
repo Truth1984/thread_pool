@@ -1,7 +1,7 @@
 {
   "name": "thread_pools",
-  "version": "1.6.9",
-  "description": "Auto-configured thread pool for worker_threads, provides both thread and pool function",
+  "version": "2.0.0",
+  "description": "Auto-configured thread pool for worker_threads, provides both thread and pool function, has thread-safe storage",
   "main": "index.js",
   "scripts": {
     "test": "node test/test.js"
@@ -15,11 +15,14 @@
     "thread_pools",
     "thread_pool",
     "thread-pool",
+    "thread safe",
     "thread",
     "threads",
     "pool",
     "worker_threads",
-    "workers"
+    "workers",
+    "thread-safe",
+    "thread-safety"
   ],
   "author": "Awada",
   "license": "MIT",

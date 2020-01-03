@@ -6,9 +6,60 @@ let functionSlicer = (func = () => {}) => {
   return whole.slice(whole.indexOf("{") + 1, whole.lastIndexOf("}"));
 };
 
+/**
+ * worker receives type :
+ *
+ * [{type:"eval", func, param},{type:"getLock", lock},{type:"getStorage",storage}, {type:"complete", id}]
+ *
+ * worker can perform/post type:
+ *
+ * ["msg","msg-warn","msg-error","result","reject","getLock","unlock","getStorage","setStorage", "complete"]
+ */
 let workerLogic = exitAfter => {
   const { parentPort } = require("worker_threads");
+
   let post = (data, type = "msg") => parentPort.postMessage({ data, type });
+  let timeout = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
+  let _unlocked = false;
+  let _completeid = 0;
+  let _complete = {};
+  let _temp_storage_ = {};
+
+  let _lock = async () => {
+    while (!_unlocked) await timeout(0.1).then(() => post("", "getLock"));
+  };
+
+  let _unlock = async () => {
+    post("", "unlock");
+    _unlocked = false;
+  };
+
+  //wait for worker's event queue to reach that point
+  let _waitComplete = async callback => {
+    let id = _completeid++;
+    return Promise.resolve(callback()).then(async data => {
+      post(id, "complete");
+      while (!_complete[id]) await timeout(0.1);
+      delete _complete[id];
+      return data;
+    });
+  };
+
+  let _autoLocker = async callback => {
+    await _lock();
+    await _waitComplete(callback);
+    await _unlock();
+  };
+
+  let storage = async callback => {
+    await _lock();
+    await _waitComplete(() => post("", "getStorage"));
+    await callback(_temp_storage_);
+    await _waitComplete(() => post(_temp_storage_, "setStorage"));
+    await _unlock();
+    return _temp_storage_;
+  };
+
   console = {
     log: (...data) => post(data),
     warn: (...data) => post(data, "msg-warn"),
@@ -26,6 +77,9 @@ let workerLogic = exitAfter => {
 
   parentPort.on("message", message => {
     if (message.type == "eval") return evaluate(message);
+    if (message.type == "getLock") return (_unlocked = message.lock);
+    if (message.type == "getStorage") return (_temp_storage_ = message.storage);
+    if (message.type == "complete") return (_complete[message.id] = true);
   });
 };
 
@@ -47,11 +101,13 @@ module.exports = class Pool {
     config = Object.assign(defaultConfig, config);
 
     this.entry = {};
+    this.storage = {};
 
     this.entry.threadNo = config.threads;
     this.entry.importGlobal = config.importGlobal;
     this.entry.waitMs = config.waitMs;
 
+    this.entry._lock = false;
     this.entry._threadPools = {};
     this.entry._threadAvailableID = Array(this.entry.threadNo)
       .fill()
@@ -63,6 +119,17 @@ module.exports = class Pool {
         env: SHARE_ENV
       });
 
+    this.entry.getLock = worker => {
+      let lock = this.entry._lock == false ? (this.entry._lock = true) : false;
+      worker.postMessage({ lock, type: "getLock" });
+    };
+    this.entry.getStorage = worker => {
+      worker.postMessage({ storage: this.storage, type: "getStorage" });
+    };
+    this.entry.setStorage = pairs => (this.storage = pairs);
+    this.entry.setComplete = (worker, id) => worker.postMessage({ type: "complete", id });
+    this.entry.unlock = () => (this.entry._lock = false);
+
     this.entry.setListener = (worker, resolve, reject) => {
       worker.removeAllListeners();
       worker.on("message", message => {
@@ -71,6 +138,11 @@ module.exports = class Pool {
         if (message.type == "reject") return reject(message.data);
         if (message.type == "msg-warn") return console.warn(...message.data);
         if (message.type == "msg-error") return console.error(...message.data);
+        if (message.type == "getLock") return this.entry.getLock(worker);
+        if (message.type == "unlock") return this.entry.unlock();
+        if (message.type == "getStorage") return this.entry.getStorage(worker);
+        if (message.type == "setStorage") return this.entry.setStorage(message.data);
+        if (message.type == "complete") return this.entry.setComplete(worker, message.data);
       });
       worker.once("error", error => reject(error));
       worker.once("exit", () => resolve());

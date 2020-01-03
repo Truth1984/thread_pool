@@ -65,7 +65,7 @@ pool
   .then(data => {
     data.cancel();
     data.result.then(res => {
-      if (res !== undefined) Promise.reject("pool stoppable not returning undefined as result");
+      if (res !== undefined) return Promise.reject("pool stoppable not returning undefined as result");
     });
   });
 
@@ -74,3 +74,11 @@ for (let i = 0; i < 10; i++) pool.threadPoolStoppable(() => 10).then(data => dat
 pool.threadSingle(() => console.log("console-log"));
 pool.threadSingle(() => console.warn("console-warn"));
 pool.threadSingle(() => console.error("console-error"));
+
+//thread safe storage test
+let arrSingle2 = [];
+pool.storage.item = 0;
+for (let i = 0; i < 20; i++) arrSingle2.push(pool.threadSingle(() => storage(store => store.item++)));
+Promise.all(arrSingle2).then(() => {
+  if (pool.storage.item != 20) return Promise.reject("async storage is not thread safe");
+});

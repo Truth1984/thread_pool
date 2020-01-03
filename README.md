@@ -1,4 +1,4 @@
-Auto-configured thread pool for worker_threads, provides both thread and pool function
+Auto-configured thread pool for worker_threads, provides both thread and pool function, has thread-safe storage
 
 ## Usage
 
@@ -35,10 +35,13 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 3. can use `console.log` inside thread function
 
+4. has thread-safe storage, can pass javascript Object
+
 ## What's new
 
 ```
 {
+    2.0.0: add thread-safe storage
     1.6.8: add console.warn/error, unify methods, fix bugs
     1.6.0: add stoppable thread single, pool, add test case
     1.4.0: support async function
@@ -68,6 +71,8 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 - cancelling every thread after the execution of `threadPoolStoppable` is no different from `threadSingle`, and maybe slower
 
+- thread-safe storage is very expensive
+
 ## API
 
 ### Pool(options)
@@ -80,21 +85,29 @@ pool.threadSingleStoppable(() => {}).cancel();
 }
 ```
 
+---
+
 ### async threadSingle(func, ...param)
 
 `func` : toStringable / cloneable function, param : parameters of `func`
 
 single thread runner, very expensive, auto closed.
 
+---
+
 ### async threadSingleStoppable(func, ...param)
 
 return `{cancel:Function, result:Promise}`
+
+---
 
 ### async threadPool(func, ...param)
 
 `func` : toStringable / cloneable function, param : parameters of `func`
 
 use already initialized threads, expensive at the beginning but much faster than `threadSingle` for larger task
+
+---
 
 ### async threadPoolStoppable(func, ...param)
 
@@ -103,3 +116,52 @@ return `Promise<{cancel:Function, result:Promise}>`
 `threadPoolStoppable().catch()` will not catch the error, use
 
 `threadPoolStoppable().then(data=>data.result.catch())` instead
+
+---
+
+## Inner API
+
+#### inner api is the function you can use within `func` for functions above, even you didn't define
+
+i.e.
+
+```js
+threadSingle(() => timeout(2)).then(() => {}); // wait for 2 seconds
+```
+
+---
+
+### async \_lock()
+
+get lock from the pool, will wait if parent is locked
+
+---
+
+### async \_unlock()
+
+unlock from the pool; better call `_lock()` beforehand
+
+---
+
+### async \_waitComplete(callback)
+
+wait for the return of the event queue (will wait when main thread worker's event queue is busy)
+
+---
+
+### async \_autoLocker(callback)
+
+acquire the lock, call `_waitComplete`, release the lock
+
+---
+
+### async \_storage(callback = (store = {}) => {})
+
+synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
+
+i.e.
+
+```js
+pool.storage.p = 0;
+pool.threadSingle(() => storage(item => item.p++)).then(() => console.log(pool.storage));
+```
