@@ -1,6 +1,6 @@
 {
   "name": "thread_pools",
-  "version": "1.6.8",
+  "version": "1.6.9",
   "description": "Auto-configured thread pool for worker_threads, provides both thread and pool function",
   "main": "index.js",
   "scripts": {

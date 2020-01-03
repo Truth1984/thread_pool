@@ -1,6 +1,34 @@
 const { Worker, isMainThread, SHARE_ENV } = require("worker_threads");
 const os = require("os");
 
+let functionSlicer = (func = () => {}) => {
+  let whole = func.toString();
+  return whole.slice(whole.indexOf("{") + 1, whole.lastIndexOf("}"));
+};
+
+let workerLogic = exitAfter => {
+  const { parentPort } = require("worker_threads");
+  let post = (data, type = "msg") => parentPort.postMessage({ data, type });
+  console = {
+    log: (...data) => post(data),
+    warn: (...data) => post(data, "msg-warn"),
+    error: (...data) => post(data, "msg-error")
+  };
+
+  let evaluate = item => {
+    let func = eval(item.func);
+    let result = Promise.resolve(func(...item.param));
+    result
+      .then(data => post(data, "result"))
+      .catch(error => post(error, "reject"))
+      .then(() => (exitAfter ? process.exit() : ""));
+  };
+
+  parentPort.on("message", message => {
+    if (message.type == "eval") return evaluate(message);
+  });
+};
+
 module.exports = class Pool {
   /**
    *
@@ -29,34 +57,11 @@ module.exports = class Pool {
       .fill()
       .map((i, index) => index);
 
-    this.entry.workerMaker = (exit = true) =>
-      new Worker(
-        ` const {  parentPort } = require("worker_threads");
-        ${this.entry.importGlobal} 
-        let post = (data, type = "msg") => parentPort.postMessage({ data, type }); 
-        console = {
-          log: (...data) => post(data),
-          warn: (...data) => post(data, "msg-warn"),
-          error: (...data) => post(data, "msg-error")
-        };
-
-        let evaluate = item => {
-          let func = eval(item.func);
-          let result = func(...item.param); 
-          if (result instanceof Promise){
-            result.then(data => post(data, "result")).catch(error => post(error, "reject")).then(()=>process.exit())
-          } else {
-            post(result, "result");
-            ${exit ? `process.exit();` : ``}
-          }
-        };
-
-        parentPort.on("message", message => {
-          if (message.type == "eval") return evaluate(message);
-        });
-        `,
-        { eval: true, env: SHARE_ENV }
-      );
+    this.entry.workerMaker = (exitAfter = true) =>
+      new Worker(this.entry.importGlobal + `\nlet exitAfter = ${exitAfter};\n` + functionSlicer(workerLogic), {
+        eval: true,
+        env: SHARE_ENV
+      });
 
     this.entry.setListener = (worker, resolve, reject) => {
       worker.removeAllListeners();

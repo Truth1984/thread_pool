@@ -42,11 +42,21 @@ pool.threadSingleStoppable(() => {}).cancel();
     1.6.8: add console.warn/error, unify methods, fix bugs
     1.6.0: add stoppable thread single, pool, add test case
     1.4.0: support async function
+}
+```
+
+## Past
+
+<details>
+<summary>Past updates</summary>
+  <pre>  
+{
     1.3.3: env is auto shared
     1.3.0: Add shareEnv option
     1.2.1: Promise.all(threadPool(......)) is now viable
 }
-```
+  </pre>
+</details>
 
 ## Notice
 
