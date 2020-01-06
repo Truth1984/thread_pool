@@ -139,7 +139,7 @@ if(uid < 0) no effect
 i.e.
 
 ```js
-threadSingle(() => timeout(2)).then(() => {}); // wait for 2 seconds
+threadSingle(() => sleep(2)).then(() => {}); // wait for 2 seconds
 ```
 
 ---
@@ -170,7 +170,7 @@ acquire the lock, call `_waitComplete`, and finally release the lock
 
 ### async storage(callback = (store = {}) => {})
 
-synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
+thread-safe & synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
 
 ```js
 pool.storage.p = 0;

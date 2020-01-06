@@ -19,14 +19,14 @@ let workerLogic = exitAfter => {
   const { parentPort } = require("worker_threads");
 
   let post = (data, type = "msg") => parentPort.postMessage({ data, type });
-  let timeout = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
+  let sleep = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
   let _unlocked = false;
   let _completeid = 0;
   let _complete = {};
   let _temp_storage_ = {};
 
   let _lock = async () => {
-    while (!_unlocked) await timeout(0.1).then(() => post("", "getLock"));
+    while (!_unlocked) await sleep(0.1).then(() => post("", "getLock"));
   };
 
   let _unlock = async () => {
@@ -39,7 +39,7 @@ let workerLogic = exitAfter => {
     let id = _completeid++;
     return Promise.resolve(callback()).then(async data => {
       post(id, "complete");
-      while (!_complete[id]) await timeout(0.1);
+      while (!_complete[id]) await sleep(0.1);
       delete _complete[id];
       return data;
     });
