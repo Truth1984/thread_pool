@@ -108,6 +108,8 @@ module.exports = class Pool {
     this.entry.waitMs = config.waitMs;
 
     this.entry._lock = false;
+    this.entry._threaduid = 1;
+    this.entry._threadCancelable = {}; // {uid : threadid} threadid corresponding to _threadpPools
     this.entry._threadPools = {};
     this.entry._threadAvailableID = Array(this.entry.threadNo)
       .fill()
@@ -147,6 +149,23 @@ module.exports = class Pool {
       worker.once("error", error => reject(error));
       worker.once("exit", () => resolve());
     };
+
+    this.entry.publisher = (data, uid) => {
+      let threadid = this.entry._threadCancelable[uid];
+      this.entry._threadAvailableID.push(threadid);
+      delete this.entry._threadCancelable[uid];
+      return data;
+    };
+
+    this.entry.terminatePoolProtocol = uid => {
+      let threadid = this.entry._threadCancelable[uid];
+      let thread = this.entry._threadPools[threadid];
+      if (threadid && thread && thread.terminate) {
+        thread.terminate();
+        delete this.entry._threadPools[threadid];
+        delete this.entry._threadCancelable[uid];
+      }
+    };
   }
 
   /**
@@ -183,36 +202,54 @@ module.exports = class Pool {
   }
 
   /**
-   * @return {Promise<{result:Promise, cancel:Function}>}
+   *
+   * @param {Number} uid if(uid > 0)  delete corresponding uid, the thread won't be stopped if uid is already resolved/rejected
+   *
+   * if(uid == 0) ? delete all threads from thread pool
+   *
+   * if(uid < 0) ? Nothing;
+   */
+  async _threadPoolStop(uid = 0) {
+    if (uid > 0) this.entry.terminatePoolProtocol(uid);
+    if (uid == 0) {
+      Object.keys(this.entry._threadCancelable).map(uid => this.entry.terminatePoolProtocol(uid));
+      Object.values(this.entry._threadPools).map(thread => thread.terminate());
+      this.entry._threadPools = {};
+      this.entry._threadAvailableID = Array(this.entry.threadNo)
+        .fill()
+        .map((i, index) => index);
+    }
+  }
+
+  /**
+   * @return {Promise<{result:Promise,uid:Number, cancel:Function}>}
    */
   async threadPoolStoppable(func, ...param) {
     if (this.entry._threadAvailableID.length <= 0) {
       await new Promise(resolve => setTimeout(() => resolve(), this.entry.waitMs));
       return this.threadPoolStoppable(func, ...param);
     }
-    let threadid = this.entry._threadAvailableID.pop();
+
     if (isMainThread) {
+      let threadid = this.entry._threadAvailableID.pop();
+      let uid = this.entry._threaduid++;
+      this.entry._threadCancelable[uid] = threadid;
+
       if (!this.entry._threadPools[threadid]) this.entry._threadPools[threadid] = this.entry.workerMaker(false);
       this.entry._threadPools[threadid].postMessage({ func: func.toString(), param, type: "eval" });
 
-      let publisher = data => {
-        this.entry._threadAvailableID.push(threadid);
-        return data;
-      };
-
       return {
-        cancel: () => {
-          this.entry._threadPools[threadid].terminate();
-          delete this.entry._threadPools[threadid];
-        },
+        uid,
+        cancel: () => this.entry.terminatePoolProtocol(uid),
         result: new Promise((resolve, reject) =>
           this.entry.setListener(this.entry._threadPools[threadid], resolve, reject)
         )
-          .then(data => publisher(data))
-          .catch(error => Promise.reject(publisher(error)))
+          .then(data => this.entry.publisher(data, uid))
+          .catch(error => Promise.reject(this.entry.publisher(error, uid)))
       };
     }
     return {
+      uid: -1,
       cancel: () => {},
       result: Promise.reject("This is not in the main thread")
     };

@@ -82,3 +82,41 @@ for (let i = 0; i < 20; i++) arrSingle2.push(pool.threadSingle(() => storage(sto
 Promise.all(arrSingle2).then(() => {
   if (pool.storage.item != 20) return Promise.reject("async storage is not thread safe");
 });
+
+let arrPool = [];
+pool.storage.bag = 0;
+for (let i = 0; i < 20; i++) arrPool.push(pool.threadPoolStoppable(() => storage(store => store.bag++)));
+let resultPool = Array.from(arrPool).map(val => val.then(d => d.result));
+Promise.all(resultPool)
+  .then(() => {
+    if (pool.storage.bag != 20) return Promise.reject("async storage is not thread safe");
+  })
+  .then(() => pool._threadPoolStop());
+
+let pool2 = new Pool({ importGlobal: `const os = require('os')`, threads: 4 });
+let arrPool2 = [];
+for (let i = 0; i < 20; i++) arrPool2.push(pool2.threadPoolStoppable(() => 100));
+let resultPool2 = Array.from(arrPool2).map(val => val.then(d => d.result));
+let cancelPool2 = Array.from(arrPool2).map(val => val.then(d => d.cancel));
+Promise.all(resultPool2)
+  .then(() => cancelPool2.map(cp => cp.then(c => c())))
+  .then(() => {
+    if (Object.keys(pool2.entry._threadPools).length != 4)
+      return Promise.reject("finshed threads should not be canceled");
+
+    if (Object.keys(pool2.entry._threadAvailableID).length != 4)
+      return Promise.reject("thread avaliable id not matched");
+  })
+  .then(() => pool2._threadPoolStop())
+  .then(() => {
+    if (Object.keys(pool2.entry._threadPools).length != 0) return Promise.reject("thread pool should be empty by now");
+    if (Object.keys(pool2.entry._threadAvailableID).length != 4)
+      return Promise.reject("thread avaliable id not matched v2");
+  })
+  .then(() => pool2.threadPoolStoppable(() => 12 + 13))
+  .then(data => data.result)
+  .then(data => {
+    if (data != 25) return Promise.reject("thread pool is not initializing properly");
+    if (Object.keys(pool2.entry._threadPools).length != 1) return Promise.reject("thread pool is not lazy initialized");
+  })
+  .then(() => pool2._threadPoolStop());

@@ -41,6 +41,7 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 ```
 {
+    2.2.1: add thread uid, fix bugs, cancel() has no effect on terminated threads
     2.0.0: add thread-safe storage
     1.6.8: add console.warn/error, unify methods, fix bugs
     1.6.0: add stoppable thread single, pool, add test case
@@ -68,8 +69,6 @@ pool.threadSingleStoppable(() => {}).cancel();
 - some libraries are unable to support `worker_threads`, like `bcrypt`
 
 - process.env is thread unsafe, use with caution.
-
-- cancelling every thread after the execution of `threadPoolStoppable` is no different from `threadSingle`, and maybe slower
 
 - thread-safe storage is very expensive
 
@@ -111,11 +110,25 @@ use already initialized threads, expensive at the beginning but much faster than
 
 ### async threadPoolStoppable(func, ...param)
 
-return `Promise<{cancel:Function, result:Promise}>`
+return `Promise<{cancel:Function,uid:Number, result:Promise}>`
 
 `threadPoolStoppable().catch()` will not catch the error, use
 
 `threadPoolStoppable().then(data=>data.result.catch())` instead
+
+every time you call it, it will generate a unique uid, can use it to call `_threadPoolStop`
+
+when thread returned a result, it will not be cancelled / terminated, but you can still call it;
+
+---
+
+### async \_threadPoolStop(uid = 0)
+
+if(uid > 0) cancel corresponding thread, has no effect on already finished thread
+
+if(uid == 0) delete all threads in thread pool
+
+if(uid < 0) no effect
 
 ---
 
@@ -133,13 +146,13 @@ threadSingle(() => timeout(2)).then(() => {}); // wait for 2 seconds
 
 ### async \_lock()
 
-get lock from the pool, will wait if parent is locked
+try to acquire the main lock, will wait until the lock is lifted
 
 ---
 
 ### async \_unlock()
 
-unlock from the pool; better call `_lock()` beforehand
+better call `_lock()` beforehand, other threads may have access to the shared data
 
 ---
 
@@ -151,15 +164,13 @@ wait for the return of the event queue (will wait when main thread worker's even
 
 ### async \_autoLocker(callback)
 
-acquire the lock, call `_waitComplete`, release the lock
+acquire the lock, call `_waitComplete`, and finally release the lock
 
 ---
 
 ### async \_storage(callback = (store = {}) => {})
 
 synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
-
-i.e.
 
 ```js
 pool.storage.p = 0;
