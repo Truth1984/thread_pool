@@ -168,7 +168,7 @@ acquire the lock, call `_waitComplete`, and finally release the lock
 
 ---
 
-### async \_storage(callback = (store = {}) => {})
+### async storage(callback = (store = {}) => {})
 
 synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
 
