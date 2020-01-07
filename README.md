@@ -41,7 +41,7 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 ```
 {
-    2.3.0  change inner api add immutable assist Object
+    2.3.1: change inner api add immutable assist Object
     2.2.1: add thread uid, fix bugs, cancel() has no effect on terminated threads
     2.0.0: add thread-safe storage
 }
