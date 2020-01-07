@@ -17,69 +17,73 @@ let functionSlicer = (func = () => {}) => {
  */
 let workerLogic = exitAfter => {
   const { parentPort } = require("worker_threads");
+  const assist = {};
+  const _subProcessing = {};
 
-  let post = (data, type = "msg") => parentPort.postMessage({ data, type });
-  let sleep = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
-  let _unlocked = false;
-  let _completeid = 0;
-  let _complete = {};
-  let _temp_storage_ = {};
+  assist.post = (data, type = "msg") => parentPort.postMessage({ data, type });
+  assist.sleep = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
+  _subProcessing.unlocked = false;
+  _subProcessing.completeid = 0;
+  _subProcessing.complete = {};
+  _subProcessing.temp_storage = {};
 
-  let _lock = async () => {
-    while (!_unlocked) await sleep(0.1).then(() => post("", "getLock"));
+  assist.lock = async () => {
+    while (!_subProcessing.unlocked) await assist.sleep(0.1).then(() => assist.post("", "getLock"));
   };
 
-  let _unlock = async () => {
-    post("", "unlock");
-    _unlocked = false;
+  assist.unlock = async () => {
+    assist.post("", "unlock");
+    _subProcessing.unlocked = false;
   };
 
   //wait for worker's event queue to reach that point
-  let _waitComplete = async callback => {
-    let id = _completeid++;
+  assist.waitComplete = async callback => {
+    let id = _subProcessing.completeid++;
     return Promise.resolve(callback()).then(async data => {
-      post(id, "complete");
-      while (!_complete[id]) await sleep(0.1);
-      delete _complete[id];
+      assist.post(id, "complete");
+      while (!_subProcessing.complete[id]) await assist.sleep(0.1);
+      delete _subProcessing.complete[id];
       return data;
     });
   };
 
-  let _autoLocker = async callback => {
-    await _lock();
-    await _waitComplete(callback);
-    await _unlock();
+  assist.autoLocker = async callback => {
+    await assist.lock();
+    await assist.waitComplete(callback);
+    await assist.unlock();
   };
 
-  let storage = async callback => {
-    await _lock();
-    await _waitComplete(() => post("", "getStorage"));
-    await callback(_temp_storage_);
-    await _waitComplete(() => post(_temp_storage_, "setStorage"));
-    await _unlock();
-    return _temp_storage_;
+  assist.storage = async callback => {
+    await assist.lock();
+    await assist.waitComplete(() => assist.post("", "getStorage"));
+    await callback(_subProcessing.temp_storage);
+    await assist.waitComplete(() => assist.post(_subProcessing.temp_storage, "setStorage"));
+    await assist.unlock();
+    return _subProcessing.temp_storage;
   };
+
+  Object.freeze(assist);
 
   console = {
-    log: (...data) => post(data),
-    warn: (...data) => post(data, "msg-warn"),
-    error: (...data) => post(data, "msg-error")
+    log: (...data) => assist.post(data),
+    warn: (...data) => assist.post(data, "msg-warn"),
+    error: (...data) => assist.post(data, "msg-error")
   };
 
   let evaluate = item => {
     let func = eval(item.func);
     let result = Promise.resolve(func(...item.param));
     result
-      .then(data => post(data, "result"))
-      .catch(error => post(error, "reject"))
+      .then(data => assist.post(data, "result"))
+      .catch(error => assist.post(error, "reject"))
       .then(() => (exitAfter ? process.exit() : ""));
   };
 
   parentPort.on("message", message => {
     if (message.type == "eval") return evaluate(message);
-    if (message.type == "getLock") return (_unlocked = message.lock);
-    if (message.type == "getStorage") return (_temp_storage_ = message.storage);
-    if (message.type == "complete") return (_complete[message.id] = true);
+    if (message.type == "getLock") return (_subProcessing.unlocked = message.lock);
+    if (message.type == "getStorage") return (_subProcessing.temp_storage = message.storage);
+    if (message.type == "complete") return (_subProcessing.complete[message.id] = true);
   });
 };
 

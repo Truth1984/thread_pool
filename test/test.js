@@ -72,7 +72,7 @@ task.ADDCommand(
   () => {
     let arr = [];
     pool.storage.item = 0;
-    for (let i = 0; i < 20; i++) arr.push(pool.threadSingle(() => storage(store => store.item++)));
+    for (let i = 0; i < 20; i++) arr.push(pool.threadSingle(() => assist.storage(store => store.item++)));
     return Promise.all(arr).then(() => {
       if (pool.storage.item != 20) return Promise.reject("async storage is not thread safe");
     });
@@ -80,7 +80,7 @@ task.ADDCommand(
   () => {
     let arrPool = [];
     pool.storage.bag = 0;
-    for (let i = 0; i < 20; i++) arrPool.push(pool.threadPoolStoppable(() => storage(store => store.bag++)));
+    for (let i = 0; i < 20; i++) arrPool.push(pool.threadPoolStoppable(() => assist.storage(store => store.bag++)));
     let resultPool = Array.from(arrPool).map(val => val.then(d => d.result));
     return Promise.all(resultPool)
       .then(() => {
@@ -122,5 +122,5 @@ task.ADDCommand(
 
 task
   .RUN()
-  .then(() => console.log("test all passed"))
+  .then(() => console.log("all tests passed"))
   .catch(e => console.log(e));

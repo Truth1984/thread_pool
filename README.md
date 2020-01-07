@@ -41,11 +41,9 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 ```
 {
+    2.3.0  change inner api add immutable assist Object
     2.2.1: add thread uid, fix bugs, cancel() has no effect on terminated threads
     2.0.0: add thread-safe storage
-    1.6.8: add console.warn/error, unify methods, fix bugs
-    1.6.0: add stoppable thread single, pool, add test case
-    1.4.0: support async function
 }
 ```
 
@@ -55,6 +53,9 @@ pool.threadSingleStoppable(() => {}).cancel();
 <summary>Past updates</summary>
   <pre>  
 {
+    1.6.8: add console.warn/error, unify methods, fix bugs
+    1.6.0: add stoppable thread single, pool, add test case
+    1.4.0: support async function
     1.3.3: env is auto shared
     1.3.0: Add shareEnv option
     1.2.1: Promise.all(threadPool(......)) is now viable
@@ -139,40 +140,40 @@ if(uid < 0) no effect
 i.e.
 
 ```js
-threadSingle(() => sleep(2)).then(() => {}); // wait for 2 seconds
+threadSingle(() => assist.sleep(2)).then(() => {}); // wait for 2 seconds
 ```
 
 ---
 
-### async \_lock()
+### async assist.lock()
 
 try to acquire the main lock, will wait until the lock is lifted
 
 ---
 
-### async \_unlock()
+### async assist.unlock()
 
-better call `_lock()` beforehand, other threads may have access to the shared data
+better call `assist.lock()` beforehand, other threads may have access to the shared data
 
 ---
 
-### async \_waitComplete(callback)
+### async assist.waitComplete(callback)
 
 wait for the return of the event queue (will wait when main thread worker's event queue is busy)
 
 ---
 
-### async \_autoLocker(callback)
+### async assist.autoLocker(callback)
 
-acquire the lock, call `_waitComplete`, and finally release the lock
+acquire the lock, call `assist.waitComplete`, and finally release the lock
 
 ---
 
-### async storage(callback = (store = {}) => {})
+### async assist.storage(callback = (store = {}) => {})
 
 thread-safe & synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
 
 ```js
 pool.storage.p = 0;
-pool.threadSingle(() => storage(item => item.p++)).then(() => console.log(pool.storage));
+pool.threadSingle(() => assist.storage(item => item.p++)).then(() => console.log(pool.storage));
 ```
