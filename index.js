@@ -39,7 +39,7 @@ let workerLogic = exitAfter => {
   //wait for worker's event queue to reach that point
   assist.waitComplete = async callback => {
     let id = _subProcessing.completeid++;
-    return Promise.resolve(callback()).then(async data => {
+    return new Promise(resolve => resolve(callback())).then(async data => {
       assist.post(id, "complete");
       while (!_subProcessing.complete[id]) await assist.sleep(0.1);
       delete _subProcessing.complete[id];
@@ -48,15 +48,20 @@ let workerLogic = exitAfter => {
   };
 
   assist.autoLocker = async callback => {
-    await assist.lock();
-    await assist.waitComplete(callback);
-    await assist.unlock();
+    return assist
+      .lock()
+      .then(() => assist.waitComplete(callback))
+      .then(() => assist.unlock())
+      .catch(e => assist.unlock().then(() => Promise.reject(e)));
   };
 
   assist.storage = async callback => {
     await assist.lock();
     await assist.waitComplete(() => assist.post("", "getStorage"));
-    await callback(_subProcessing.temp_storage);
+    await new Promise(resolve => resolve(callback(_subProcessing.temp_storage))).catch(error => {
+      assist.unlock();
+      return Promise.reject(error);
+    });
     await assist.waitComplete(() => assist.post(_subProcessing.temp_storage, "setStorage"));
     await assist.unlock();
     return _subProcessing.temp_storage;

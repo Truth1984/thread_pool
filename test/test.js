@@ -117,7 +117,31 @@ task.ADDCommand(
           return Promise.reject("thread pool is not lazy initialized");
       })
       .then(() => pool._threadPoolStop());
-  }
+  },
+  task.MARK("reject unlock test"),
+  () => pool.threadPool(() => assist.storage(store => (store.pp.udf = 13))).catch(e => {}),
+  () => {
+    if (pool.entry._lock) return Promise.reject("thread pool reject is not unlocked");
+  },
+  task.MARK("lock test"),
+  () =>
+    pool.threadPool(async () => {
+      await assist.waitComplete(() => assist.post("", "getLock"));
+      if (!_subProcessing.unlocked) return Promise.reject("thread pool getLock, lock not acquired");
+    }),
+  () => {
+    if (!pool.entry._lock) return Promise.reject("thread pool main lock is not locked");
+  },
+  () =>
+    pool.threadPool(async () => {
+      await assist.waitComplete(() => assist.post("", "getLock"));
+      if (_subProcessing.unlocked) return Promise.reject("thread pool is not locked, lock acquired again");
+    }),
+  () => pool.threadPool(() => assist.waitComplete(() => assist.post("", "unlock"))),
+  () => {
+    if (pool.entry._lock) return Promise.reject("thread pool main lock is still locking");
+  },
+  () => pool._threadPoolStop()
 );
 
 task
