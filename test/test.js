@@ -74,7 +74,7 @@ task.ADDCommand(
     pool.storage.item = 0;
     for (let i = 0; i < 20; i++) arr.push(pool.threadSingle(() => assist.storage(store => store.item++)));
     return Promise.all(arr).then(() => {
-      if (pool.storage.item != 20) return Promise.reject("async storage is not thread safe");
+      if (pool.storage.item != 20) return Promise.reject("async storage is not thread safe - item");
     });
   },
   () => {
@@ -84,7 +84,7 @@ task.ADDCommand(
     let resultPool = Array.from(arrPool).map(val => val.then(d => d.result));
     return Promise.all(resultPool)
       .then(() => {
-        if (pool.storage.bag != 20) return Promise.reject("async storage is not thread safe");
+        if (pool.storage.bag != 20) return Promise.reject("async storage is not thread safe - bag");
       })
       .then(() => pool._threadPoolStop());
   },

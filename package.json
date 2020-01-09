@@ -31,6 +31,6 @@
   },
   "homepage": "https://github.com/Truth1984/thread_pools#readme",
   "devDependencies": {
-    "tasklanguage": "^2.4.3"
+    "tasklanguage": "^2.5.0"
   }
 }
