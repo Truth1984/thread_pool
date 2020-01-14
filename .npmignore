@@ -7,4 +7,3 @@
 .env.production.local
 .vscode
 .ignored*
-/test
