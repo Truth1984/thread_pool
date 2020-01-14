@@ -1,4 +1,4 @@
-Auto-configured thread pool for worker_threads, provides both thread and pool function, has thread-safe storage
+Thread pool with Auto-configuration for worker_threads, provides both thread and pool function, has thread-safe storage
 
 ## Usage
 
@@ -143,6 +143,12 @@ i.e.
 ```js
 threadSingle(() => assist.sleep(2)).then(() => {}); // wait for 2 seconds
 ```
+
+---
+
+### async assist.sleep(seconds)
+
+resolve after certain seconds
 
 ---
 

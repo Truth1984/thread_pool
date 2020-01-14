@@ -1,7 +1,7 @@
 {
   "name": "thread_pools",
-  "version": "2.4.0",
-  "description": "Auto-configured thread pool for worker_threads, provides both thread and pool function, has thread-safe storage",
+  "version": "2.4.1",
+  "description": "Thread pool with Auto-configuration for worker_threads, provides both thread and pool function, has thread-safe storage",
   "main": "index.js",
   "scripts": {
     "test": "node test/test.js"
@@ -12,7 +12,7 @@
   },
   "keywords": [
     "thread pool",
-    "thread_pools",
+    "threadpool",
     "thread_pool",
     "thread-pool",
     "thread safe",

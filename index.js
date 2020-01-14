@@ -70,7 +70,7 @@ let workerLogic = exitAfter => {
   Object.freeze(assist);
 
   console = {
-    log: (...data) => assist.post(data),
+    log: (...data) => assist.post(data, "msg"),
     warn: (...data) => assist.post(data, "msg-warn"),
     error: (...data) => assist.post(data, "msg-error")
   };
@@ -191,6 +191,7 @@ module.exports = class Pool {
         result: new Promise((resolve, reject) => this.entry.setListener(worker, resolve, reject))
       };
     }
+
     return {
       cancel: () => {},
       result: Promise.reject("This is not in the main thread")
