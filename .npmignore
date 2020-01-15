@@ -7,3 +7,4 @@
 .env.production.local
 .vscode
 .ignored*
+package-lock.json

@@ -37,33 +37,6 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 4. has thread-safe storage, can pass javascript Object
 
-## What's new
-
-```
-{
-    2.4.0: auto unlock after rejection
-    2.3.1: change inner api add immutable assist Object
-    2.2.1: add thread uid, fix bugs, cancel() has no effect on terminated threads
-    2.0.0: add thread-safe storage
-}
-```
-
-## Past
-
-<details>
-<summary>Past updates</summary>
-  <pre>  
-{
-    1.6.8: add console.warn/error, unify methods, fix bugs
-    1.6.0: add stoppable thread single, pool, add test case
-    1.4.0: support async function
-    1.3.3: env is auto shared
-    1.3.0: Add shareEnv option
-    1.2.1: Promise.all(threadPool(......)) is now viable
-}
-  </pre>
-</details>
-
 ## Notice
 
 - better initialize Pool only once and Store it in a global variable
