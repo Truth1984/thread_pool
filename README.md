@@ -51,7 +51,7 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 ```js
 let variable = 10;
-pool.threadSingle(() => console.log(variable)); // not gonna work
+pool.threadSingle(() => console.log(variable)); // not gonna work, out of scope
 pool.threadSingle(v => console.log(v), variable); // will work
 ```
 
