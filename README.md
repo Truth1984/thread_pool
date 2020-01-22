@@ -47,6 +47,14 @@ pool.threadSingleStoppable(() => {}).cancel();
 
 - thread-safe storage is very expensive
 
+- `func` cannot use any pre-declared variable, need to pass in as a parameter
+
+```js
+let variable = 10;
+pool.threadSingle(() => console.log(variable)); // not gonna work
+pool.threadSingle(v => console.log(v), variable); // will work
+```
+
 ## API
 
 ### Pool(options)
