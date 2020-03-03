@@ -117,7 +117,15 @@ if(uid < 0) no effect
 
 ## Inner API
 
-#### inner api is the function you can use within `func` for functions above, even you didn't define
+### usage
+
+```js
+const assist = require("thread_pools").assist;
+```
+
+<b>`assist`</b> is a keyword, so you have to use this one.
+
+#### inner api is the function you can use within `func` for functions above, even you didn't define one
 
 i.e.
 

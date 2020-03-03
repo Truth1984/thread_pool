@@ -92,7 +92,7 @@ let workerLogic = exitAfter => {
   });
 };
 
-module.exports = class Pool {
+class Pool {
   /**
    *
    * @param {{threads:Number, importGlobal:string, waitMs:Number}} config threads : CPUNo. < 3 ? 2 : (CPUNo. * 2 - 2)
@@ -264,4 +264,16 @@ module.exports = class Pool {
       result: Promise.reject("This is not in the main thread")
     };
   }
+}
+
+const assist = {
+  sleep: async seconds => {},
+  lock: async () => {},
+  unlock: async () => {},
+  waitComplete: async callback => {},
+  autoLocker: async callback => {},
+  storage: async (callback = (store = {}) => {}) => {}
 };
+
+module.exports = Pool;
+module.exports.assist = assist;

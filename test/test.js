@@ -1,5 +1,6 @@
 const Pool = require("../index.js");
 const { TaskLanguage } = require("tasklanguage");
+const assist = require("../index").assist;
 
 let task = new TaskLanguage(false);
 

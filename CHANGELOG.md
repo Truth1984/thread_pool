@@ -1,3 +1,7 @@
+**2.4.6**
+
+- add require("thread_pools").assist
+
 **2.4.0**
 
 - auto unlock after rejection (if locked)
