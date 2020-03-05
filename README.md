@@ -141,6 +141,12 @@ resolve after certain seconds
 
 ---
 
+### assist.serialize(object)
+
+use '('+object+')' to deseialize
+
+---
+
 ### async assist.lock()
 
 try to acquire the main lock, will wait until the lock is lifted

@@ -21,7 +21,8 @@ let workerLogic = exitAfter => {
   const assist = {};
   const _subProcessing = {};
 
-  assist.post = (data, type = "msg") => parentPort.postMessage({ data, type });
+  assist.serialize = require("serialize-javascript");
+  assist.post = (data, type = "msg") => parentPort.postMessage({ data: assist.serialize(data), type });
   assist.sleep = seconds => new Promise(resolve => setTimeout(() => resolve(), seconds * 1000));
   _subProcessing.unlocked = false;
   _subProcessing.completeid = 0;
@@ -145,6 +146,7 @@ class Pool {
     this.entry.setListener = (worker, resolve, reject) => {
       worker.removeAllListeners();
       worker.on("message", message => {
+        message.data = eval("(" + message.data + ")");
         if (message.type == "msg") return console.log(...message.data);
         if (message.type == "result") return resolve(message.data);
         if (message.type == "reject") return reject(message.data);
@@ -268,6 +270,7 @@ class Pool {
 }
 
 const assist = {
+  serialize: () => {},
   sleep: async seconds => {},
   lock: async () => {},
   unlock: async () => {},

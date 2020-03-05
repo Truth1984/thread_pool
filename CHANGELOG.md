@@ -1,3 +1,7 @@
+**2.5.2**
+
+- FIX DataCloneError when pass function as result
+
 **2.5.0**
 
 - FIX DataCloneError when pass in complex function as parameter

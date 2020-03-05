@@ -142,7 +142,12 @@ task.ADDCommand(
   () => {
     if (pool.entry._lock) return Promise.reject("thread pool main lock is still locking");
   },
-  () => pool._threadPoolStop()
+  () => pool._threadPoolStop(),
+  task.MARK("complex function"),
+  () =>
+    pool.threadSingle(() => {
+      return () => 2;
+    })
 );
 
 task
