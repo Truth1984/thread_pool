@@ -1,5 +1,6 @@
 const { Worker, isMainThread, SHARE_ENV } = require("worker_threads");
 const os = require("os");
+const serialize = require("serialize-javascript");
 
 let functionSlicer = (func = () => {}) => {
   let whole = func.toString();
@@ -76,8 +77,8 @@ let workerLogic = exitAfter => {
   };
 
   let evaluate = item => {
-    let func = eval(item.func);
-    let result = Promise.resolve(func(...item.param));
+    let func = eval("(" + item.func + ")");
+    let result = Promise.resolve(func(...eval("(" + item.param + ")")));
     result
       .then(data => assist.post(data, "result"))
       .catch(error => assist.post(error, "reject"))
@@ -184,7 +185,7 @@ class Pool {
   threadSingleStoppable(func, ...param) {
     if (isMainThread) {
       let worker = this.entry.workerMaker();
-      worker.postMessage({ func: func.toString(), param, type: "eval" });
+      worker.postMessage({ func: serialize(func), param: serialize(param), type: "eval" });
 
       return {
         cancel: () => worker.terminate(),
@@ -246,7 +247,7 @@ class Pool {
       this.entry._threadCancelable[uid] = threadid;
 
       if (!this.entry._threadPools[threadid]) this.entry._threadPools[threadid] = this.entry.workerMaker(false);
-      this.entry._threadPools[threadid].postMessage({ func: func.toString(), param, type: "eval" });
+      this.entry._threadPools[threadid].postMessage({ func: serialize(func), param: serialize(param), type: "eval" });
 
       return {
         uid,

@@ -1,6 +1,6 @@
 {
   "name": "thread_pools",
-  "version": "2.4.6",
+  "version": "2.5.0",
   "description": "Thread pool with Auto-configuration for worker_threads, provides both thread and pool function, has thread-safe storage",
   "main": "index.js",
   "scripts": {
@@ -32,5 +32,8 @@
   "homepage": "https://github.com/Truth1984/thread_pools#readme",
   "devDependencies": {
     "tasklanguage": "^2.5.2"
+  },
+  "dependencies": {
+    "serialize-javascript": "^3.0.0"
   }
 }

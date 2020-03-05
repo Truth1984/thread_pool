@@ -1,3 +1,7 @@
+**2.5.0**
+
+- FIX DataCloneError when pass in complex function as parameter
+
 **2.4.6**
 
 - add require("thread_pools").assist
