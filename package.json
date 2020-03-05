@@ -1,6 +1,6 @@
 {
   "name": "thread_pools",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "description": "Thread pool with Auto-configuration for worker_threads, provides both thread and pool function, has thread-safe storage",
   "main": "index.js",
   "scripts": {

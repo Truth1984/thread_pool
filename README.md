@@ -143,7 +143,7 @@ resolve after certain seconds
 
 ### assist.serialize(object)
 
-use '('+object+')' to deseialize
+use '('+object+')' to deserialize
 
 ---
 
