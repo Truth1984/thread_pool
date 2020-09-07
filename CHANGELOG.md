@@ -1,3 +1,7 @@
+**2.5.4**
+
+- FIX DEPENDENCY WARNING
+
 **2.5.2**
 
 - FIX DataCloneError when pass function as result
