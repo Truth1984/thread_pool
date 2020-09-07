@@ -11,11 +11,11 @@ let ezpool = new Pool();
 let pool = new Pool({
   threads: 2,
   importGlobal: `const os = require('os');`,
-  waitMs: 1000
+  waitMs: 1000,
 });
 
 for (let i = 0; i < 10; i++) {
-  pool.threadPool(index => console.log(os.cpus().length + index), i);
+  pool.threadPool((index) => console.log(os.cpus().length + index), i);
 }
 
 pool
@@ -52,7 +52,7 @@ pool.threadSingleStoppable(() => {}).cancel();
 ```js
 let variable = 10;
 pool.threadSingle(() => console.log(variable)); // not gonna work, out of scope
-pool.threadSingle(v => console.log(v), variable); // will work
+pool.threadSingle((v) => console.log(v), variable); // 10
 ```
 
 ## API
@@ -63,7 +63,7 @@ pool.threadSingle(v => console.log(v), variable); // will work
 {
     threads = if No. of cpu < 3, then 2, else (cpu No. * 2 - 2)
     importGlobal : import / require statement for every threads
-    waitMs: Main Thread Promise Checker, check if the pool is open
+    waitMs: Main Thread Pool Checker, wait certain time until pools freed up
 }
 ```
 
@@ -79,7 +79,7 @@ single thread runner, very expensive, auto closed.
 
 ### async threadSingleStoppable(func, ...param)
 
-return `{cancel:Function, result:Promise}`
+return `{cancel:Function, result:Promise}` also auto closed after finish
 
 ---
 
@@ -125,12 +125,12 @@ const assist = require("thread_pools").assist;
 
 <b>`assist`</b> is a keyword, so you have to use this one.
 
-#### inner api is the function you can use within `func` for functions above, even you didn't define one
+#### inner api is the function you can use within `func`
 
 i.e.
 
 ```js
-threadSingle(() => assist.sleep(2)).then(() => {}); // wait for 2 seconds
+threadSingle(() => assist.sleep(2)).then(() => {}); // wait 2 seconds
 ```
 
 ---
@@ -143,13 +143,13 @@ resolve after certain seconds
 
 ### assist.serialize(object)
 
-use '('+object+')' to deserialize
+use `eval('('+object+')')` to deserialize
 
 ---
 
 ### async assist.lock()
 
-try to acquire the main lock, will wait until the lock is lifted
+try to manually acquire the main lock, will wait until the lock is lifted
 
 ---
 
@@ -161,21 +161,23 @@ better call `assist.lock()` beforehand, other threads may have access to the sha
 
 ### async assist.waitComplete(callback)
 
-wait for the return of the event queue (will wait when main thread worker's event queue is busy)
+wait for the return of the event queue (wait until main thread worker's event queue's callback)
 
 ---
 
 ### async assist.autoLocker(callback)
 
-acquire the lock, call `assist.waitComplete`, and finally release the lock
+acquire the lock, call `assist.waitComplete`, and finally release the lock after callback finshed
 
 ---
 
 ### async assist.storage(callback = (store = {}) => {})
 
-thread-safe & synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will be reflected on the original `pool.storage`
+thread-safe & synced storage, can communicate between different threads, can be used by both `single` and `pool`, any change on the `store` will reflecte on the original `pool.storage`
 
 ```js
 pool.storage.p = 0;
-pool.threadSingle(() => assist.storage(item => item.p++)).then(() => console.log(pool.storage));
+pool.threadSingle(() => assist.storage((item) => item.p++)).then(() => console.log(pool.storage));
 ```
+
+storage will aquire lock first, then copy main thread storage, wait until user callback finish, update main thread storage, remove lock, and return updated value
